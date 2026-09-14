@@ -1,6 +1,13 @@
-import { ConflictError } from "../errors";
+import { ConflictError, UnauthorizedError } from "../errors";
 import * as repo from "../Repos/auth.repo";
 import bcrypt from "bcrypt";
+import { generateJwtToken } from "../utils/utils";
+import jwt from "jsonwebtoken";
+
+interface CustomJwtPayload extends jwt.JwtPayload {
+    email: string;
+    role: "student" | "admin";
+}
 
 export async function createStudent(student: Student) {
     const existingStudent = await repo.getStudentByEmail(student.email);
@@ -17,36 +24,83 @@ export async function createStudent(student: Student) {
     };
 }
 
-// function generateJwtRefreshToken(data: {
-//     id: number;
-//     role: "student" | "admin";
-// }) {
-//     const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "secret";
-//     const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "30d";
-//     const token = jwt.sign(data, JWT_REFRESH_SECRET, {
-//         expiresIn: JWT_REFRESH_EXPIRY as jwt.SignOptions["expiresIn"],
-//     });
-//     return token;
-// }
-// export function refreshToken(refreshToken: string) {
-//     try {
-//         const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "secret";
+export async function login(data: {
+    email: string;
+    password: string;
+    role: "student" | "admin";
+}) {
+    if (data.role === "student") {
+        const hashedPassword = await repo.getStudentPasswordByEmail(data.email);
+        if (!hashedPassword)
+            throw new UnauthorizedError("invalid Email or password");
 
-//         const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as {
-//             id: number;
-//             role: "student" | "admin";
-//         };
-//         const token = generateJwtAccessToken(decoded);
-//         return {
-//             status: 200,
-//             send: { message: "Access token generation successfull", token },
-//         };
-//     } catch (err) {
-//         if (err instanceof jwt.TokenExpiredError)
-//             return { status: 401, send: { message: "Refresh Token Expired" } };
-//         else if (err instanceof jwt.JsonWebTokenError) {
-//             return { status: 401, send: { message: "Unauthorized" } };
-//         }
-//         return { status: 500, send: { message: "Internal Server Error" } };
-//     }
-// }
+        const isSame = await bcrypt.compare(data.password, hashedPassword);
+        if (!isSame) throw new UnauthorizedError("invalid Email or password");
+    }
+
+    if (data.role === "admin") {
+        const hashedPassword = await repo.getAdminPasswordByEmail(data.email);
+        if (!hashedPassword)
+            throw new UnauthorizedError("invalid Email or password");
+
+        const isSame = await bcrypt.compare(data.password, hashedPassword);
+        if (!isSame) throw new UnauthorizedError("invalid Email or password");
+    }
+    const jwtExpiry = process.env.JWT_EXPIRY || "15m";
+    const jwtSecret = process.env.JWT_SECRET || "secret";
+    const jwtRefreshExpiry = process.env.JWT_REFRESH_EXPIRY || "30d";
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || "secret";
+
+    const refreshToken = generateJwtToken(
+        { email: data.email, role: data.role },
+        jwtRefreshSecret,
+        jwtRefreshExpiry
+    );
+
+    const accessToken = generateJwtToken(
+        { email: data.email, role: data.role },
+        jwtSecret,
+        jwtExpiry
+    );
+
+    const decoded = jwt.decode(refreshToken) as jwt.JwtPayload;
+    const expiresAt = new Date(decoded.exp! * 1000);
+
+    if (data.role === "student")
+        await repo.addStudentRefreshToken(data.email, refreshToken, expiresAt);
+    if (data.role === "admin")
+        await repo.addAdminRefreshToken(data.email, refreshToken, expiresAt);
+
+    return {
+        refreshToken,
+        accessToken,
+    };
+}
+
+export async function refresh(refreshToken: string) {
+    const databaseToken = await repo.getRefreshToken(refreshToken);
+    if (!databaseToken)
+        throw new UnauthorizedError("Token is invalid or expired");
+    const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "secret";
+
+    const decoded = jwt.verify(
+        refreshToken,
+        JWT_REFRESH_SECRET
+    ) as CustomJwtPayload;
+    const jwtExpiry = process.env.JWT_EXPIRY || "15m";
+    const jwtSecret = process.env.JWT_SECRET || "secret";
+
+    const payload = { ...decoded };
+    delete payload.exp;
+    delete payload.iat;
+
+    const token = generateJwtToken(payload, jwtSecret, jwtExpiry);
+
+    return token;
+}
+
+export async function logout(refreshToken: string) {
+    const result = await repo.deleteRefreshToken(refreshToken);
+
+    return result;
+}

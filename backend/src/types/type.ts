@@ -3,3 +3,8 @@ interface Student {
     email: string;
     password: string;
 }
+
+interface AuthorizedUser {
+    email: string;
+    role: "admin" | "student";
+}
