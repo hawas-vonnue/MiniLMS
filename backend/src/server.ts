@@ -2,7 +2,8 @@ import express from "express";
 import { authRoute } from "./Routes/auth.routes";
 import { errorHandler } from "./middleWare/errorHandler";
 import { courseRoute } from "./Routes/courses.routes";
-import { moduleRouter } from "./Routes/modules.routes";
+import { moduleRoute } from "./Routes/modules.routes";
+import { adminRoute } from "./Routes/admin.routes";
 
 const app = express();
 
@@ -10,7 +11,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRoute);
 app.use("/api/courses", courseRoute);
-app.use("/api/modules", moduleRouter);
+app.use("/api/modules", moduleRoute);
+app.use("/api/admin", adminRoute);
 
 app.use(errorHandler);
 

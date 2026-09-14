@@ -42,3 +42,8 @@ interface Question {
     correctOption: "A" | "B" | "C" | "D";
     options: string[];
 }
+
+interface WhereClause {
+    studentId?: number;
+    quizId?: number;
+}
