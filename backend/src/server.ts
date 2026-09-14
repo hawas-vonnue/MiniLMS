@@ -1,12 +1,14 @@
 import express from "express";
 import { authRoute } from "./Routes/auth.routes";
 import { errorHandler } from "./middleWare/errorHandler";
+import { courseRoute } from "./Routes/courses.routes";
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/auth", authRoute);
+app.use("/api/auth", authRoute);
+app.use("/api/courses", courseRoute);
 
 app.use(errorHandler);
 

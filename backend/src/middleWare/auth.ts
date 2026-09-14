@@ -16,7 +16,6 @@ export function Authorize(req: Request, res: Response, next: NextFunction) {
     if (!authorization) return next(new UnauthorizedError());
 
     const token = authorization.split("Bearer ")[1];
-    console.log(token, "token");
 
     const JWT_SECRET = process.env.JWT_SECRET || "secret";
 

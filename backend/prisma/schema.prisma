@@ -43,9 +43,9 @@ model Course {
   name String
   description String
   createdBy Int
-  
-
+  publishStatus Boolean
   level Levels
+
   enrolled Student[]
   modules Module[]
   admin Admin @relation(fields: [createdBy],references: [id],onDelete: Cascade)
@@ -123,16 +123,6 @@ model LessonCompleted{
   @@id([studentId,lessonId])
 }
 
-// model RefreshToken {
-//   id        String   @id @default(uuid())
-//   token     String   @unique
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   expiresAt DateTime
-//   createdAt DateTime @default(now())
-
-//   @@index([token]) // Makes matching the token inside refresh() highly optimized
-// }
 
 model RefreshToken{
   id Int @id @default(autoincrement())

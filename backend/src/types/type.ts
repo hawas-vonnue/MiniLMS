@@ -8,3 +8,23 @@ interface AuthorizedUser {
     email: string;
     role: "admin" | "student";
 }
+
+interface Course {
+    name: string;
+    description: string;
+    createdBy: number;
+    publishStatus: boolean;
+    level: "Beginner" | "Intermediate" | "Advanced";
+}
+
+interface CourseInput {
+    name?: string;
+    description?: string;
+    createdBy?: number;
+    publishStatus?: boolean;
+    level?: "Beginner" | "Intermediate" | "Advanced";
+}
+
+interface Module {
+    title: string;
+}
