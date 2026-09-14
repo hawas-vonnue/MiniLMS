@@ -28,3 +28,17 @@ interface CourseInput {
 interface Module {
     title: string;
 }
+
+interface Lesson {
+    content: string;
+}
+
+interface Quiz {
+    title: string;
+}
+
+interface Question {
+    question: string;
+    correctOption: "A" | "B" | "C" | "D";
+    options: string[];
+}
