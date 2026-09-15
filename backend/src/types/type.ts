@@ -47,3 +47,10 @@ interface WhereClause {
     studentId?: number;
     quizId?: number;
 }
+
+interface CourseWhereClause {
+    createdBy?: number;
+    publishStatus?: boolean;
+    level?: "Beginner" | "Intermediate" | "Advanced";
+    OR?: Object[];
+}
