@@ -54,3 +54,8 @@ interface CourseWhereClause {
     level?: "Beginner" | "Intermediate" | "Advanced";
     OR?: Object[];
 }
+
+interface Answer {
+    questionId: number;
+    option: "A" | "B" | "C" | "D";
+}
